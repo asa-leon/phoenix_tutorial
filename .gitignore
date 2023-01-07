@@ -32,3 +32,5 @@ hello-*.tar
 npm-debug.log
 /assets/node_modules/
 
+#custom
+dev.exs
