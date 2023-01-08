@@ -19,8 +19,56 @@ defmodule HelloWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :index
+	
+	resources "/users", UserController do
+		resources "/posts", PostController
+	end
+
+	resources "/posts", PostController, only: [:index, :show]
+	resources "/comments", CommentController, except: [:delete]
     get "/hello", HelloController, :index
     get "/hello/:messenger", HelloController, :show
+
+	resources "/reviews", ReviewController
+  end
+
+  scope "/admin", HelloWeb.Admin, as: :admin do
+	pipe_through :browser
+
+	resources "/images", ImageController
+	resources "/reviews", ReviewController
+	resources "/users", UserController
+  end
+
+  scope "/api", HelloWeb.Api, as: :api do
+	pipe_through :api
+
+	scope "/v1", V1, as: :v1 do
+		resources "/images", ImageController
+		resources "/reviews", ReviewController
+		resources "/users", UserController
+	end
+  end
+
+  # Custom pipeline
+  pipeline :review_checks do
+	plug :browser
+	# plug :ensure_authenticated_user
+	# plug :ensure_user_owns_review
+  end
+
+  # Sample of what if we need to pipe requests through 
+  # both :browser and more custom pipelines.
+  scope "/reviews", HelloWeb do
+	pipe_through :review_checks # :review_checks has invoked in its statement
+
+	resources "/", ReviewController # Only reviews' resources routes will pipe through the `:review_checks`.
+  end
+
+  # Example of `Forward`
+  scope "/" do
+	# pipe_through [:authenticate_user, :ensure_admin]
+	forward "/jobs", BackgroundJob.Plug, name: "Hello Phoenix"
   end
 
   # Other scopes may use custom stacks.
